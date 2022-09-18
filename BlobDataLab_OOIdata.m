@@ -25,6 +25,7 @@ lon = ncreadatt(filename,'/','lon');
 
 time = ncread(filename,'time');
 stemp = ncread(filename,'ctdmo_seawater_temperature');
+pressure = ncread(filename,'ctdmo_seawater_pressure_qc_results');
 % Extension option: Also extract the variable "pressure" (which, due to the
 % increasing pressure underwater, tells us about depth - 1 dbar ~ 1 m
 % depth). How deep in the water column was this sensor deployed?
@@ -60,6 +61,9 @@ res = mean(diff(timemat));
 % human-readable dates rather than the MATLAB timestamp numbers
 
 plot(timemat,stemp)
+xlabel("Time")
+ylabel("degC")
+title("SST at SMB Station Papa 2013-14")
 datetick
 
 %% 4. Dealing with data variability: smoothing and choosing a variability cutoff
@@ -87,13 +91,20 @@ hold on
 plot(timemat,stempmm)
 datetick
 hold off
+xlabel("Time")
+ylabel("degC")
+title("Raw data + 1-day movemean 2013-14")
+
+%5b. A plot of the 1-day moving standard deviation, on a separate plot
+%underneath, but with the same x-axis (hint: you can put two plots in the
+%same figure by using "subplot" and you can specify
 
 subplot(2,1,2)
 plot(timemat,stempmstd)
 datetick
-%5b. A plot of the 1-day moving standard deviation, on a separate plot
-%underneath, but with the same x-axis (hint: you can put two plots in the
-%same figure by using "subplot" and you can specify
+xlabel("Time")
+ylabel("Standard Deviation")
+title("1-day moving standard deviation")
 
 %% 6. Identifying data to exclude from analysis
 % Based on the plot above, you can see that there are time periods when the
@@ -104,11 +115,11 @@ datetick
 %1-day moving standard deviation beyond which you will exclude the data
 %from your analysis. Note that you will need to justify this choice in the
 %methods section of your writeup for this lab.
-
-index = find(stempmstd <= 1);
+cutoff=2
 
 %6b. Find the indices of the data points that you are not excluding based
 %on the cutoff chosen in 6a.
+index = find(stempmstd <= cutoff);
 
 %6c. Update your figure from #5 to add the non-excluded data as a separate
 %plotted set of points (i.e. in a new color) along with the other data you
@@ -122,15 +133,21 @@ plot(timemat,stempmm,'k')
 plot(timemat(index),stempmm(index),'.r')
 datetick
 hold off
+xlabel("Time")
+ylabel('degC')
+title("SST raw data + 2 std-cutoff smoothed data 2013-14")
 
 subplot(2,1,2)
 plot(timemat,stempmstd)
 hold on
 plot(timemat(index),stempmstd(index),'.r')
 xlim([timemat(1) timemat(end)])
-ylim([0 2.5])
+ylim([0 cutoff+0.5])
 datetick
 hold off
+xlabel("Time")
+ylabel("Standard Deviation")
+title("Standard Deviation 2-std cutoff 2013-14")
 
 %% 7. Apply the approach from steps 1-6 above to extract data from all OOI deployments in years 1-6
 % You could do this by writing a for-loop or a function to adapt the code
@@ -145,7 +162,7 @@ timemat = datenum(1900,1,1,0,0,time);
 res = mean(diff(timemat));
 stempmm = movmean(stemp,(1/res));
 stempmstd = movstd(stemp,(1/res));
-index = find(stempmstd <= 1.5);
+index = find(stempmstd <= cutoff);
 
 figure
 subplot(2,1,1)
@@ -154,15 +171,23 @@ hold on
 plot(timemat,stempmm,'k')
 plot(timemat(index),stempmm(index),'.r')
 datetick
+d_1 = string(datetime(datenum(1900,1,1,0,0,time(1)),"ConvertFrom","datenum",Format="uuuu"));
+d_2 = string(datetime(datenum(1900,1,1,0,0,time(end)),"ConvertFrom","datenum",Format="uuuu"));
 hold off
+xlabel("Time")
+ylabel('degC')
+title("Raw SST + 1-day movemean at SFM B — OOI Station Papa array — " + d_1 + " - " + d_2)
 
 subplot(2,1,2)
 plot(timemat,stempmstd)
 hold on
 plot(timemat(index),stempmstd(index),'.r')
 xlim([timemat(1) timemat(end)])
-ylim([0 2.5])
+ylim([0 cutoff+0.5])
 datetick
 hold off
+xlabel("Time")
+ylabel("Standard Deviation")
+title("Standard Deviation with "+string(cutoff)+"-std cutoff — " + d_1 + " - " + d_2)
 
 end
