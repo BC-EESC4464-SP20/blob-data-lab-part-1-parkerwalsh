@@ -203,9 +203,8 @@ res = mean(diff(timemat));
 stempmm = movmean(stemp,(1/res));
 stempmstd = movstd(stemp,(1/res));
 index = find(stempmstd <= cutoff);
-timematcat = [timematcat; timemat];
+timematcat = [timematcat; time];
 stempmmcat = [stempmmcat; stempmm];
 end
 
 plot(timematcat,stempmmcat)
-datetick('x','yyyy-mm-dd')
