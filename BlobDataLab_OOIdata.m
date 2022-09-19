@@ -189,5 +189,20 @@ hold off
 xlabel("Time")
 ylabel("Standard Deviation")
 title("Standard Deviation with "+string(cutoff)+"-std cutoff — " + d_1 + " - " + d_2)
+end
 
+%% Stuff for Part two
+timematcat = [];
+stempmmcat = [];
+for i = [1,3:6]
+filename = ['deployment000' num2str(i) '_GP03FLMB.nc'];
+time = ncread(filename,'time');
+stemp = ncread(filename,'ctdmo_seawater_temperature');
+timemat = datenum(1900,1,1,0,0,time);
+res = mean(diff(timemat));
+stempmm = movmean(stemp,(1/res));
+stempmstd = movstd(stemp,(1/res));
+index = find(stempmstd <= cutoff);
+timematcat = [timematcat; time];
+stempmmcat = [stempmmcat; stempmm];
 end
