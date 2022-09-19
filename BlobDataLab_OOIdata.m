@@ -207,5 +207,40 @@ timematcat = [timematcat; timemat];
 stempmmcat = [stempmmcat; stempmm];
 end
 
+figure
 plot(timematcat,stempmmcat)
 datetick('x','yyyy-mm-dd')
+
+%% Mapping Prep
+filename = 'jplMURSST41anommday_1331_3f53_cf28.nc';
+% ncdisp(filename)
+lat = double(ncread(filename,'latitude'));
+lon = double(ncread(filename,'longitude'));
+time = double(ncread(filename,'time'));
+sstAnom = double(ncread(filename,'sstAnom'));
+mask = double(ncread(filename,'mask'));
+imagescn(lon,lat,sstAnom(:,:,7)')
+cmocean('thermal')
+
+% index = find(mask ~= 1);
+
+% sstAnom(index) = nan;
+%% Mapping
+figure;
+axesm("MapProjection","mercator","MapLatLimit",latlim,"MapLonLimit",lonlim)
+latlim = [min(lat) max(lat)];
+lonlim = [min(lon) max(lon)];
+
+pcolorm(lat,lon,sstAnom(:,:,7)')
+% % coast = load("coastlines.mat");
+% geoshow(coast.coastlat,coast.coastlon)
+geoshow('landareas.shp',"FaceColor","black")
+% geoshow(lat,lon,sstAnom(:,:,52),cmocean('balance','pivot'))
+cmocean('balance','pivot');
+c=colorbar()
+
+scatterm(50.5,-144.5,100,'yellow','filled','o')
+
+% figure; 
+% axesm miller
+% h = geoshow('landareas.shp');
