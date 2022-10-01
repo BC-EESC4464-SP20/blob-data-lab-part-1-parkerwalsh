@@ -2,6 +2,7 @@
 
 clear
 clc
+load("matlab.mat")
 
 filename = 'deployment0001_GP03FLMB.nc';
 %1a. Use the function "ncdisp" to display information about the data contained in this file
@@ -14,18 +15,18 @@ ncdisp(filename);
 %--> 
 %-->
 
-lat = ncreadatt(filename,'/','lat');
+station_papa_lat_value = ncreadatt(filename,'/','lat');
 
-lon = ncreadatt(filename,'/','lon');
+station_papa_lon_value  = ncreadatt(filename,'/','lon');
 
 %1c. Use the function "ncread" to extract the variables "time" and
 %"ctdmo_seawater_temperature"
 %-->
 %-->
 
-time = ncread(filename,'time');
-stemp = ncread(filename,'ctdmo_seawater_temperature');
-pressure = ncread(filename,'ctdmo_seawater_pressure_qc_results');
+station_papa_time_values = ncread(filename,'time');
+station_papa_seawater_temperature_values = ncread(filename,'ctdmo_seawater_temperature');
+% pressure = ncread(filename,'ctdmo_seawater_pressure_qc_results');
 % Extension option: Also extract the variable "pressure" (which, due to the
 % increasing pressure underwater, tells us about depth - 1 dbar ~ 1 m
 % depth). How deep in the water column was this sensor deployed?
@@ -37,7 +38,7 @@ pressure = ncread(filename,'ctdmo_seawater_pressure_qc_results');
 
 % -->
 
-timemat = datenum(1900,1,1,0,0,time);
+station_papa_datenum_time_values = datenum(1900,1,1,0,0,station_papa_time_values);
 
 % timemat = datenum(time);
 
@@ -45,13 +46,13 @@ timemat = datenum(1900,1,1,0,0,time);
 % converted times match the time range listed in the netCDF file's
 % attributes for time coverage
 
-timeconv = datestr(timemat);
+station_papa_string_time_values = datestr(station_papa_datenum_time_values);
 
 % 2b. Calculate the time resolution of the data (i.e. long from one
 % measurement to the next) in minutes. Hint: the "diff" function will be
 % helpful here.
 
-res = mean(diff(timemat));
+res = mean(diff(station_papa_datenum_time_values));
 
 %% 3. Make an initial exploration plot to investigate your data
 % Make a plot of temperature vs. time, being sure to show each individual
@@ -60,11 +61,11 @@ res = mean(diff(timemat));
 % Hint: Use the function "datetick" to make the time show up as
 % human-readable dates rather than the MATLAB timestamp numbers
 
-plot(timemat,stemp)
+plot(station_papa_datenum_time_values, station_papa_seawater_temperature_values)
 xlabel("Time")
 ylabel("degC")
-title("SST at SMB Station Papa 2013-14")
-datetick
+title("Seawater Temperature depth=30m at SMB Station Papa 2013-14")
+datetick('x',"yyyy/mmm")
 
 %% 4. Dealing with data variability: smoothing and choosing a variability cutoff
 % 4a. Use the movmean function to calculate a 1-day (24 hour) moving mean
@@ -74,22 +75,22 @@ datetick
 
 % -->
 
-stempmm = movmean(stemp,(1/res));
+station_papa_seawater_temperature_movmean = movmean(station_papa_seawater_temperature_values,(1/res));
 
 % 4b. Use the movstd function to calculate the 1-day moving standard
 % deviation of the data.
 
-stempmstd = movstd(stemp,(1/res));
+station_papa_seawater_temperature_movstd = movstd(station_papa_seawater_temperature_values,(1/res));
 
 %% 5. Honing your initial investigation plot
 % Building on the initial plot you made in #3 above, now add:
 %5a. A plot of the 1-day moving mean on the same plot as the original raw data
 figure
 subplot(2,1,1)
-plot(timemat,stemp)
+plot(station_papa_datenum_time_values, station_papa_seawater_temperature_values)
 hold on
-plot(timemat,stempmm)
-datetick
+plot(station_papa_datenum_time_values, station_papa_seawater_temperature_movmean)
+datetick('x','yyyy/mmm')
 hold off
 xlabel("Time")
 ylabel("degC")
@@ -100,8 +101,8 @@ title("Raw data + 1-day movemean 2013-14")
 %same figure by using "subplot" and you can specify
 
 subplot(2,1,2)
-plot(timemat,stempmstd)
-datetick
+plot(station_papa_datenum_time_values, station_papa_seawater_temperature_movstd)
+datetick('x','yyyy/mmm')
 xlabel("Time")
 ylabel("Standard Deviation")
 title("1-day moving standard deviation")
@@ -115,11 +116,11 @@ title("1-day moving standard deviation")
 %1-day moving standard deviation beyond which you will exclude the data
 %from your analysis. Note that you will need to justify this choice in the
 %methods section of your writeup for this lab.
-cutoff=2
+cutoff=2;
 
 %6b. Find the indices of the data points that you are not excluding based
 %on the cutoff chosen in 6a.
-index = find(stempmstd <= cutoff);
+index = find(station_papa_seawater_temperature_movstd <= cutoff);
 
 %6c. Update your figure from #5 to add the non-excluded data as a separate
 %plotted set of points (i.e. in a new color) along with the other data you
@@ -127,23 +128,23 @@ index = find(stempmstd <= cutoff);
 
 figure
 subplot(2,1,1)
-plot(timemat,stemp)
+plot(station_papa_datenum_time_values,station_papa_seawater_temperature_values)
 hold on
-plot(timemat,stempmm,'k')
-plot(timemat(index),stempmm(index),'.r')
-datetick
+plot(station_papa_datenum_time_values,station_papa_seawater_temperature_movmean,'k')
+plot(station_papa_datenum_time_values(index),station_papa_seawater_temperature_movmean(index),'.r')
+datetick('x','yyyy/mmm')
 hold off
 xlabel("Time")
 ylabel('degC')
 title("SST raw data + 2 std-cutoff smoothed data 2013-14")
 
 subplot(2,1,2)
-plot(timemat,stempmstd)
+plot(station_papa_datenum_time_values,station_papa_seawater_temperature_movstd)
 hold on
-plot(timemat(index),stempmstd(index),'.r')
-xlim([timemat(1) timemat(end)])
+plot(station_papa_datenum_time_values(index),station_papa_seawater_temperature_movstd(index),'.r')
+xlim([station_papa_datenum_time_values(1) station_papa_datenum_time_values(end)])
 ylim([0 cutoff+0.5])
-datetick
+datetick('x','yyyy/mmm')
 hold off
 xlabel("Time")
 ylabel("Standard Deviation")
@@ -154,93 +155,61 @@ title("Standard Deviation 2-std cutoff 2013-14")
 % you wrote above to something you can apply across all 5 netCDF files
 % (note that deployment 002 is missing)
 
+concatenated_station_papa_seawater_temperatures = [];
+concatenated_station_papa_datenum_times = [];
+
+
 for i = [1,3:6]
-filename = ['deployment000' num2str(i) '_GP03FLMB.nc'];
-time = ncread(filename,'time');
-stemp = ncread(filename,'ctdmo_seawater_temperature');
-timemat = datenum(1900,1,1,0,0,time);
-res = mean(diff(timemat));
-stempmm = movmean(stemp,(1/res));
-stempmstd = movstd(stemp,(1/res));
-index = find(stempmstd <= cutoff);
+loop_filename = ['deployment000' num2str(i) '_GP03FLMB.nc'];
+loop_station_papa_time_values = ncread(loop_filename,'time');
+loop_station_papa_seawater_temperature_values = ncread(loop_filename,'ctdmo_seawater_temperature');
+
+loop_station_papa_datenum_time_values = datenum(1900,1,1,0,0,loop_station_papa_time_values);
+
+res = mean(diff(loop_station_papa_datenum_time_values));
+
+
+loop_station_papa_seawater_temperature_movmean = movmean(loop_station_papa_seawater_temperature_values,(1/res));
+
+loop_station_papa_seawater_temperature_movstd = movstd(loop_station_papa_seawater_temperature_values,(1/res));
+
+cutoff=2;
+
+index = find(loop_station_papa_seawater_temperature_movstd <= cutoff);
+
 
 figure
 subplot(2,1,1)
-plot(timemat,stemp)
+plot(loop_station_papa_datenum_time_values,loop_station_papa_seawater_temperature_values)
 hold on
-plot(timemat,stempmm,'k')
-plot(timemat(index),stempmm(index),'.r')
+plot(loop_station_papa_datenum_time_values,loop_station_papa_seawater_temperature_movmean,'k')
+plot(loop_station_papa_datenum_time_values(index),loop_station_papa_seawater_temperature_movmean(index),'.r')
 datetick
-d_1 = string(datetime(datenum(1900,1,1,0,0,time(1)),"ConvertFrom","datenum",Format="uuuu"));
-d_2 = string(datetime(datenum(1900,1,1,0,0,time(end)),"ConvertFrom","datenum",Format="uuuu"));
+d_1 = datestr(loop_station_papa_datenum_time_values(1),'yyyy');
+d_2 = datestr(loop_station_papa_datenum_time_values(end),'yyyy');
 hold off
 xlabel("Time")
 ylabel('degC')
 title("Raw SST + 1-day movemean at SFM B — OOI Station Papa array — " + d_1 + " - " + d_2)
 
 subplot(2,1,2)
-plot(timemat,stempmstd)
+plot(loop_station_papa_datenum_time_values,loop_station_papa_seawater_temperature_movstd)
 hold on
-plot(timemat(index),stempmstd(index),'.r')
-xlim([timemat(1) timemat(end)])
+plot(loop_station_papa_datenum_time_values(index),loop_station_papa_seawater_temperature_movstd(index),'.r')
+xlim([loop_station_papa_datenum_time_values(1) loop_station_papa_datenum_time_values(end)])
 ylim([0 cutoff+0.5])
 datetick
 hold off
 xlabel("Time")
 ylabel("Standard Deviation")
 title("Standard Deviation with "+string(cutoff)+"-std cutoff — " + d_1 + " - " + d_2)
+
+if i == 1
+concatenated_station_papa_datenum_times = [concatenated_station_papa_datenum_times; loop_station_papa_datenum_time_values(1:10:end);nan];
+concatenated_station_papa_seawater_temperatures = [concatenated_station_papa_seawater_temperatures; loop_station_papa_seawater_temperature_movmean(1:10:end);nan]; 
+
+else
+concatenated_station_papa_seawater_temperatures = [concatenated_station_papa_seawater_temperatures; loop_station_papa_seawater_temperature_movmean(1:10:end)]; 
+concatenated_station_papa_datenum_times = [concatenated_station_papa_datenum_times; loop_station_papa_datenum_time_values(1:10:end)];
 end
-
-%% Stuff for Part two
-timematcat = [];
-stempmmcat = [];
-for i = [1,3:6]
-filename = ['deployment000' num2str(i) '_GP03FLMB.nc'];
-time = ncread(filename,'time');
-stemp = ncread(filename,'ctdmo_seawater_temperature');
-timemat = datenum(1900,1,1,0,0,time);
-res = mean(diff(timemat));
-stempmm = movmean(stemp,(1/res));
-stempmstd = movstd(stemp,(1/res));
-index = find(stempmstd <= cutoff);
-timematcat = [timematcat; timemat];
-stempmmcat = [stempmmcat; stempmm];
 end
-
-figure
-plot(timematcat,stempmmcat)
-datetick('x','yyyy-mm-dd')
-
-%% Mapping Prep
-filename = 'jplMURSST41anommday_1331_3f53_cf28.nc';
-% ncdisp(filename)
-lat = double(ncread(filename,'latitude'));
-lon = double(ncread(filename,'longitude'));
-time = double(ncread(filename,'time'));
-sstAnom = double(ncread(filename,'sstAnom'));
-mask = double(ncread(filename,'mask'));
-imagescn(lon,lat,sstAnom(:,:,7)')
-cmocean('thermal')
-
-% index = find(mask ~= 1);
-
-% sstAnom(index) = nan;
-%% Mapping
-figure;
-axesm("MapProjection","mercator","MapLatLimit",latlim,"MapLonLimit",lonlim)
-latlim = [min(lat) max(lat)];
-lonlim = [min(lon) max(lon)];
-
-pcolorm(lat,lon,sstAnom(:,:,7)')
-% % coast = load("coastlines.mat");
-% geoshow(coast.coastlat,coast.coastlon)
-geoshow('landareas.shp',"FaceColor","black")
-% geoshow(lat,lon,sstAnom(:,:,52),cmocean('balance','pivot'))
-cmocean('balance','pivot');
-c=colorbar()
-
-scatterm(50.5,-144.5,100,'yellow','filled','o')
-
-% figure; 
-% axesm miller
-% h = geoshow('landareas.shp');
